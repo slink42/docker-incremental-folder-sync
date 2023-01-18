@@ -11,7 +11,7 @@ on:
 
 env:
   DOCKERHUB_USER: slink42
-  IMAGE_NAME: slink42/mergerfs
+  IMAGE_NAME: slink42/incremental-folder-sync
 
 jobs:
   buildx:
