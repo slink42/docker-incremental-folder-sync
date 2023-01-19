@@ -12,7 +12,7 @@ ENV RCLONE_PATH=
 
 ADD scripts /scripts
 RUN chmod +x -R /scripts
-RUN echo rclone version
+RUN rclone version
 
 CMD ["/scripts/incremental_folder_sync.sh"] 
 # ENTRYPOINT ["/scripts/incremental_folder_sync.sh"]
