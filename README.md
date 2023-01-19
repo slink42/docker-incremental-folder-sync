@@ -1,4 +1,4 @@
-# docker-mergerfs
+# docker-incremental-folder-sync
 
 [![buildx](https://github.com/slink42/docker-incremental-folder-sync/actions/workflows/buildx.yml/badge.svg?branch=master)](https://github.com/slink42/docker-incremental-folder-sync/actions/workflows/buildx.yml)
 

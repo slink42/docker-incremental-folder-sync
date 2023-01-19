@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/with-contenv bash
 
 # EXTRACTED_FILES_PATH=/mnt/c/Users/stuar/libfiles
 # CONFIG_PATH=/mnt/c/Users/stuar/config
