@@ -69,10 +69,7 @@ jobs:
             --load \
             .
           CID=$(docker run -d ${{ env.IMAGE_NAME }}:testing)
-          echo "container id: $CID"
-          RCLONE_VERSION=$(docker exec $CID rclone version | head -n 1)
-          echo "rclone version full: $RCLONE_VERSION"
-          VER=$(echo $RCLONE_VERSION | cut -f2 -d'v')
+          VER=$(docker exec $CID rclone version | head -n 1 | cut -f2 -d'v')
           docker rm -f $CID
           echo "APP_VER=$VER" >> $GITHUB_ENV
           echo "rclone version: $VER"
