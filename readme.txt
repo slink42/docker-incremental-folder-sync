@@ -5,4 +5,5 @@ docker run \
     -e RCLONE_PATH=plex_library_backup/meta \
     -v /mnt/c/Users/stuar/config:/config \
     -v /mnt/c/Users/stuar/libfiles:/extracted_files \
-    incremental-folder-sync
+    --name incremental-sync \
+    slink42/incremental-folder-sync:latest

@@ -8,7 +8,7 @@
 
 
 # import restore_from_backup function
-source /scripts/restore_from_backup.sh
+source /usr/local/bin/restore_from_backup.sh
 
 
 # Define the local path where the extracted tar files will be saved using the EXTRACTED_FILES_PATH environment variable:

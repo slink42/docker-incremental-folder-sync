@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # import split_files function
-source /scripts/split_files.sh
+source /usr/local/bin/split_files.sh
 
 # Define the function
 save_to_backup() {
