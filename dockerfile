@@ -21,11 +21,7 @@ RUN \
     echo "**** add rclone ****" && \
     apt-get update -qq && \
     apt-get install -yq --no-install-recommends \
-        ca-certificates \
-        curl \
-        tar \
-        pv \
-        unzip && \
+        ca-certificates curl unzip && \
     if [ "${RCLONE_TYPE}" = "latest" ]; then \
         rclone_install_script_url="https://rclone.org/install.sh"; \
     elif [ "${RCLONE_TYPE}" = "mod" ]; then \
@@ -34,13 +30,69 @@ RUN \
     mv /usr/bin/rclone /bar/usr/bin/rclone
 
 # add local files
-COPY scripts/ /scripts/
-RUN chmod +x -R /scripts
+COPY root/ /bar/
 
-ENV EXTRACTED_FILES_PATH=/extracted_files
-ENV CONFIG_PATH=/config
-ENV RCLONE_REMOTE=SECURE_BACKUP
-ENV RCLONE_PATH=
+ADD https://raw.githubusercontent.com/by275/docker-base/main/_/etc/cont-init.d/adduser /bar/etc/cont-init.d/10-adduser
+ADD https://raw.githubusercontent.com/by275/docker-base/main/_/etc/cont-init.d/install-pkg /bar/etc/cont-init.d/20-install-pkg
 
-CMD ["/scripts/incremental_folder_sync.sh"] 
-# ENTRYPOINT ["/scripts/incremental_folder_sync.sh"]
+# 
+# RELEASE
+# 
+FROM ubuntu
+LABEL maintainer="slink42"
+LABEL org.opencontainers.image.source https://github.com/slink42/docker-mergerfs
+
+ARG DEBIAN_FRONTEND="noninteractive"
+ARG APT_MIRROR="archive.ubuntu.com"
+
+# add build artifacts
+COPY --from=builder /bar/ /
+
+# install packages
+RUN \
+    echo "**** apt source change for local build ****" && \
+    sed -i "s/archive.ubuntu.com/$APT_MIRROR/g" /etc/apt/sources.list && \
+    echo "**** install runtime packages ****" && \
+    apt-get update && \
+    apt-get install -yq --no-install-recommends apt-utils && \
+    apt-get install -yq --no-install-recommends \
+        bc \
+        ca-certificates \
+        fuse \
+        jq \
+        lsof \
+        openssl \
+        tzdata \
+        unionfs-fuse \
+        wget && \
+    update-ca-certificates && \
+    sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf && \
+    echo "**** create abc user ****" && \
+    useradd -u 911 -U -d /config -s /bin/false abc && \
+    usermod -G users abc && \
+    echo "**** permissions ****" && \
+    chmod a+x /usr/local/bin/* && \
+    echo "**** cleanup ****" && \
+    apt-get clean autoclean && \
+    apt-get autoremove -y && \
+    rm -rf /tmp/* /var/lib/{apt,dpkg,cache,log}/
+
+# environment settings
+ENV \
+    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
+    S6_KILL_FINISH_MAXTIME=7000 \
+    S6_SERVICES_GRACETIM=5000 \
+    S6_KILL_GRACETIME=5000 \
+    LANG=C.UTF-8 \
+    PS1="\u@\h:\w\\$ " \
+    EXTRACTED_FILES_PATH=/extracted_files \
+    CONFIG_PATH=/config \
+    RCLONE_REMOTE=SECURE_BACKUP \
+    RCLONE_PATH= \
+    RCLONE_CONFIG=/config/rclone.conf \
+    DATE_FORMAT="+%4Y/%m/%d %H:%M:%S"
+
+VOLUME /config /log
+WORKDIR /CONFIG_PATH
+
+ENTRYPOINT ["/init"]

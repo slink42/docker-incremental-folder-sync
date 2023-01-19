@@ -1,9 +1,10 @@
 #!/bin/bash
 
-EXTRACTED_FILES_PATH=/mnt/c/Users/stuar/libfiles
-CONFIG_PATH=/mnt/c/Users/stuar/config
-RCLONE_REMOTE=secure_backup_rw
-RCLONE_PATH=plex_library_backup/meta
+# EXTRACTED_FILES_PATH=/mnt/c/Users/stuar/libfiles
+# CONFIG_PATH=/mnt/c/Users/stuar/config
+# RCLONE_REMOTE=secure_backup_rw
+# RCLONE_PATH=plex_library_backup/meta
+# MODE=BACKUP/RESTORE
 
 
 # import restore_from_backup function
