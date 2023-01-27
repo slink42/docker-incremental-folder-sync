@@ -64,6 +64,8 @@ RUN \
         openssl \
         tzdata \
         unionfs-fuse \
+        pv \
+        tar \
         wget && \
     update-ca-certificates && \
     sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf && \
