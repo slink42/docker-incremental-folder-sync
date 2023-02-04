@@ -41,6 +41,17 @@ if [ "${mode}" = "RESTORE" ]; then
   restore_command="restore_from_backup \"$target_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$min_disk_space\" \"$temp_dir\""
   echo $restore_command
 
+  # Create target_dir/config_dir/temp_dir if it doesn't exist yet
+  [ -d "${target_dir}" ] || mkdir -p "${target_dir}"
+  [ -d "${config_dir}" ] || mkdir -p "${config_dir}"
+  [ -d "${temp_dir}" ] || mkdir -p "${temp_dir}"
+
+  # set required permissions
+  chown abc:abc -R \
+    "${config_dir}"
+  chown abc:abc \
+    "${target_dir}" "${temp_dir}" 
+
   exec s6-setuidgid abc \
     /usr/local/bin/restore_from_backup.sh "$target_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$min_disk_space" "$temp_dir"
   
