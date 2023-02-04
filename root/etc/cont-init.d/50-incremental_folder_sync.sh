@@ -8,7 +8,6 @@
 
 
 # import restore_from_backup function
-source /usr/local/bin/restore_from_backup.sh
 
 
 # Define the local path where the extracted tar files will be saved using the EXTRACTED_FILES_PATH environment variable:
@@ -41,9 +40,9 @@ rclone_path=${RCLONE_PATH:-""}
 if [ "${mode}" = "RESTORE" ]; then
   restore_command="restore_from_backup \"$target_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$min_disk_space\" \"$temp_dir\""
   echo $restore_command
-  
+
   exec s6-setuidgid abc \
-    restore_from_backup "$target_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$min_disk_space" "$temp_dir"
+    /usr/local/bin/restore_from_backup.sh "$target_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$min_disk_space" "$temp_dir"
   
 
 

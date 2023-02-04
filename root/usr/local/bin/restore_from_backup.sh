@@ -106,3 +106,4 @@ restore_from_backup() {
 
 # # Call the function
 # restore_from_backup "$target_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$min_disk_space" "$temp_dir"
+restore_from_backup "$1" "$2" "$3" "$4" "$5" "$6"
