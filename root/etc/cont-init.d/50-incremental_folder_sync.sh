@@ -41,7 +41,9 @@ rclone_path=${RCLONE_PATH:-""}
 if [ "${mode}" = "RESTORE" ]; then
   restore_command="restore_from_backup \"$target_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$min_disk_space\" \"$temp_dir\""
   echo $restore_command
-  restore_from_backup "$target_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$min_disk_space" "$temp_dir"
+  
+  exec s6-setuidgid abc \
+    restore_from_backup "$target_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$min_disk_space" "$temp_dir"
   
 
 
