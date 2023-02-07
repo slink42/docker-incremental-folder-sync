@@ -107,19 +107,33 @@ split_files "$target_dir" "$temp_dir" "$min_date" "$max_date" "$max_size" "$spli
 
 # # Set the target directory
 # source_dir="/path/to/target/directory"
+source_dir="$1"
 
 # # Set the config directory
 # config_dir="/path/to/config/directory"
+config_dir"$2"
 
 # # Set the rclone source
 # rclone_remote="remote_name"
 # rclone_path="path/to/source/directory"
+rclone_remote="$3"
+rclone_path="$4"
 
 #  # Optional - Set max file size, save into another tar if total size will exceed the thershold kB (5GB)
 #  max_file_size=${5:-"5242880"}
+max_file_size="$5"
 
 # # Optional - Set the temp directory
 # temp_dir="/tmp"
+temp_dir="$6"
 
-# # Call the function
-# save_to_backup "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$max_file_size" "$temp_dir"
+source_dir="$1"
+config_dir"$2"
+rclone_remote="$3"
+rclone_path="$4"
+max_file_size="$5"
+temp_dir="$6"
+
+
+# Call the function
+save_to_backup "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$max_file_size" "$temp_dir"

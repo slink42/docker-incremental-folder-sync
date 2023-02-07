@@ -7,9 +7,6 @@
 # MODE=BACKUP/RESTORE
 
 
-# import restore_from_backup function
-
-
 # Define the local path where the extracted tar files will be saved using the EXTRACTED_FILES_PATH environment variable:
 target_dir=$EXTRACTED_FILES_PATH
 config_dir=${CONFIG_PATH:-"/config"}
@@ -32,6 +29,9 @@ min_disk_space=${MIN_DISK_SPACE:-"52428800"}
 rclone_remote=${RCLONE_REMOTE:-"SECURE_BACKUP"}
 rclone_path=${RCLONE_PATH:-""}
 
+# Define the max size for backup tar file, saves remaining into other tar(s) if total size will exceed the thershold kB (5GB)
+max_file_size=${MAX_TAR_FILE_SPACE:-"5242880"}
+
 
 ##########################################################################################################################
 ##############################################      RESTORE      #########################################################
@@ -44,7 +44,7 @@ if [ "${mode}" = "RESTORE" ]; then
   # Create target_dir/config_dir/temp_dir if it doesn't exist yet
   [ -d "${target_dir}" ] || mkdir -p "${target_dir}"
   [ -d "${config_dir}" ] || mkdir -p "${config_dir}"
-  [ -d "${temp_dir}" ] || mkdir -p "${temp_dir}"
+  [ -d "${temp_dir}" ]   || mkdir -p "${temp_dir}"
 
   # set required permissions
   chown abc:abc -R \
@@ -55,74 +55,6 @@ if [ "${mode}" = "RESTORE" ]; then
   exec s6-setuidgid abc \
     /usr/local/bin/restore_from_backup.sh "$target_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$min_disk_space" "$temp_dir"
   
-
-
-#   rclone_config=${RCLONE_CONFIG:-""${config_dir}"/rclone.conf"}
-
-# # If rclone config found in custom location, define argument to reference it to include in rclone commands
-# if [ -f "$rclone_config" ]; then
-#     echo "using rclone config found in path: $rclone_config"
-# else
-#     rclone_config=$(rclone config file | grep -v "stored at:")
-#     echo "using default rclone config path: $rclone_config"
-# fi
-
-# # Define the text file were a record of the files that have been porcessed will be maintained
-# processed_files_file="${config_dir}/processed_tar_files.txt"
-
-# # If the processed_files_file doesn't exist create an empty one
-# [ -d "$config_dir" ] || mkdir "$config_dir"
-# [ -f "$processed_files_file" ] || touch "$processed_files_file"
-
-# # Use the rclone command to list the tar files in the remote. You will need to specify the name of the remote, as well as the path to the directory where the tar files are stored.
-# tar_files=$(rclone lsf ${rclone_remote}:${rclone_path} --config "${rclone_config}"  --filter "+ *.tar.gz" --filter "+ *.tar" --filter "- *" | while read line; do   echo "${line// /\\ }"; done)
-
-  # [ -d "${target_dir}" ] || (mkdir -p "${target_dir}" && echo "extract directory doesn't exit. Creating folder: ${target_dir}")
-  # # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
-  # echo "$tar_files" | while read line; do
-  #     echo ${line}                                                                                                                                                                                                                   echo "$line"
-  #   if grep -q "$line" "$processed_files_file"; then
-  #     continue
-  #   fi
-
-  #   # tar file has not yet been processed, so copy it to the local path
-  #   # and extract its contents
-  #   tar_file="$line"
-
-  #   # Check how much free disk space there is
-  #   disk_avail=$(df -l  "${target_dir}" | grep / | awk  -F' ' '{print $4}')
-
-  #   if [[ $disk_avail -lt $min_disk_space ]]; then
-  #     echo "disk free space ($disk_avail) is less than the minimum specified ($min_disk_space bytes). Terminating tar extraction before starting ${tar_file}"
-  #     break
-  #   fi
-
-  #   echo "Starting ${tar_file}"
-
-  #   # Use rclone to copy and extract the tar file to the local path:
-  #   # if rclone cat "${rclone_remote}:${rclone_path}${tar_file}" | pv -s $(echo '{"count":1,"bytes":33966099957}' | sed -r 's/.*"bytes":([^"]+)}.*/\1/') | tar -C "${target_dir}" -xZf -; then
-  #   if rclone cat "${rclone_remote}:${rclone_path}${tar_file}" --low-level-retries 50  --config "${rclone_config}" | pv -s $(rclone size --json "${rclone_remote}:${rclone_path}${tar_file}" | sed -r 's/.*"bytes":([^"]+)}.*/\1/') |  gzip -dc | tar -xf - -C "${target_dir}"; then
-
-  #     echo "Successfully completed extracting ${tar_file}"
-
-  #     # Add the tar file to the list of processed files:
-  #     echo "$tar_file" >> $processed_files_file
-  #   else
-  #     echo "Error code returned when extracting from cloud. ${tar_file}"
-      
-  #     echo "Retrying from with staging tar file locally first."
-  #     rclone copy --low-level-retries 50  --config "${rclone_config}" --progress "${rclone_remote}:${rclone_path}${tar_file}" "${target_dir}"
-
-  #     if pv "${target_dir}/${tar_file}" | gzip -dc | tar -xf - -C "${target_dir}"; then
-  #       echo "Successfully completed extracting ${tar_file}"
-  #       # Add the tar file to the list of processed files:
-  #       echo "$tar_file" >> $processed_files_file
-  #     else
-  #       echo "Error code returned when copying to local path or extracting file contents. ${target_dir}/${tar_file}"
-  #       break
-  #     fi
-  #   fi
-  # done
 fi
 
 
@@ -131,7 +63,14 @@ fi
 ##########################################################################################################################
 
 
-# if [ "${mode}" = "BACKUP" ]; then
+if [ "${mode}" = "BACKUP" ]; then
+  source_dir="$target_dir"
+  # exec s6-setuidgid abc \
+  #   /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$max_file_size" "$temp_dir"
+
+  echo "backup command:"
+  echo "/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$max_file_size\" \"$temp_dir\""
+fi
 
 # rclone_config=${RCLONE_CONFIG:-""${config_dir}"/rclone.conf"}
 
