@@ -17,14 +17,20 @@ save_to_backup() {
   # mode=${7:-"stream extract"}
 
   # If the config_dir doesn't exist create it
-  [ -d "$config_path" ] || mkdir "$config_path"
+  [ -d "$config_dir" ] || mkdir "$config_dir"
   file_list_file="${config_dir}/source_files.txt"
 
   # check for rclone config in config_dir
-  ([ -f "${config_dir}/rclone.conf" ] && restore_rclone_config="${config_dir}/rclone.conf" && echo "using config found in cofig dir: ${restore_rclone_config}") || restore_rclone_config=""
-  restore_rclone_config=${restore_rclone_config:-$(rclone config file | grep -v "stored at:")}
+  ([ -f "${config_dir}/rclone.conf" ] && restore_rclone_config="${config_dir}/rclone.conf" && echo "using config found in config dir: ${restore_rclone_config}") || restore_rclone_config=""
+  restore_rclone_config=${restore_rclone_config:-$(rclone config file | grep -v "stored at:" | grep ".conf")}
+  [ -f "${restore_rclone_config}" ] && \
+    (echo "Configuration file doesn't exist, but rclone will use this path: /config/rclone.conf") && \
+    restore_rclone_config="/config/rclone.conf"
 
   [ -d "${target_dir}" ] || (echo "Aborting, source directory doesn't exit: ${source_dir}")
+
+  # Make sure tar target dir exists by creating it
+  rclone mkdir "${restore_rclone_remote}:${restore_rclone_path}"
 
   # Use the rclone command to list the tar files in the remote. You will need to specify the name of the remote, as well as the path to the directory where the tar files are stored.
   tar_files=$(rclone lsf "${restore_rclone_remote}:${restore_rclone_path}" --config "${restore_rclone_config}"  --filter "+ *.tar.gz" --filter "+ *.tar" --filter "- *" | while read line; do   echo "${line// /\\ }"; done)
@@ -127,7 +133,7 @@ max_file_size="$5"
 # temp_dir="/tmp"
 temp_dir="$6"
 
-source_dir="$1"
+source_dir=""
 config_dir"$2"
 rclone_remote="$3"
 rclone_path="$4"
