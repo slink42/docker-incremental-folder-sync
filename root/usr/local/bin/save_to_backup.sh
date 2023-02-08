@@ -68,11 +68,12 @@ save_to_backup() {
   min_file_mod_time=$(date --date="${last_tar_date}")
 
   new_tar_file_no_ext="${tar_filename_start}_${last_tar_date}_to_${new_tar_date}"
-
+  echo "$(date) New tar files name prefix ${new_tar_file_no_ext}"
+  
   cd "${source_dir}"
 
-  find "./Metadata" "./Media" -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
-  echo "$(date) Found $( cat "${file_list_file}" | wc -l) files. Adding to tar ${new_tar_file_no_ext}"
+  # find "./Metadata" "./Media" -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
+  # echo "$(date) Found $( cat "${file_list_file}" | wc -l) files. Adding to tar ${new_tar_file_no_ext}"
 
   # # Set the target directory
   # source_dir="/path/to/directory"
@@ -87,11 +88,12 @@ save_to_backup() {
 
   # Call the function
   rm -f "${config_dir}/${split_file_prefix}*${split_file_suffix}"
-  split_files "${source_dir}" "${temp_dir}" "${min_date}" "${max_date}" "${max_size}" "${split_file_prefix}" "${split_file_suffix}"
+  
+  split_files "./Metadata" "${temp_dir}" "${min_date}" "${max_date}" "${max_size}" "${split_file_prefix}metadata-" "${split_file_suffix}"
+  split_files "./Media" "${temp_dir}" "${min_date}" "${max_date}" "${max_size}" "${split_file_prefix}media-" "${split_file_suffix}"
+  #split "${file_list_file}" -a 3 -d -l 100000 "${config_dir}/split_file_list_"
 
-  split "${file_list_file}" -a 3 -d -l 100000 "${config_dir}/split_file_list_"
-
-  for split_list_file in $(ls "${config_dir}/split_file_list_*")
+  for split_list_file in $(ls "${config_dir}/${split_file_prefix}*${split_file_suffix}")
   do
       split_number="${split_list_file##*_}"
       split_new_tar_file="${new_tar_file_no_ext}_${split_number}.tar.gz"

@@ -4,15 +4,15 @@
 split_files() {
 
   # Set the target directory
-  target_dir=$1
-  temp_dir=$2
+  source_dir=$1
+  config_dir=$2
 
   # Set the minimum modification date, maximum modification date and maximum total file size
   min_date=${3:-"1671856158"} #1970-01-01
   max_date=${4:-"1671856158"} #now
   max_size=${5:-"5242880"}
-  split_file_prefix==${6:-"group-"}
-  split_file_suffix=${7:-".txt"}
+  split_file_prefix=${6:-'group-'}
+  split_file_suffix=${7:-'.txt'}
   
 
   # Initialize variables
@@ -20,20 +20,26 @@ split_files() {
   group_size=0
   group_num=1
 
+  
+  file_list_file="${config_dir}/${split_file_prefix}source_files.txt"
+  find "${source_dir}"  -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
+  echo "$(date) Found $( cat "${file_list_file}" | wc -l) files in ${source_dir} for selected date range."
+
   # Iterate over the files in the target directory
-  for file in "$target_dir"/*; do
+  while read file; do
     # Get the modification time of the file
     mtime=$(stat -c %Y "$file")
 
     # Check if the file was modified after the minimum date
-    if [ $mtime -gt $min_date ] && [ $mtime -lte $max_date ]; then
+    if [ $mtime -gt $min_date ] && [ $mtime -le $max_date ]; then
       # Get the file size
       size=$(stat -c %s "$file")
 
       # Check if adding the file to the current group would exceed the maximum size
       if [ $(($group_size + $size)) -gt $max_size ]; then
         # Save the current group to a text file
-        printf "%s\n" "${file_list[@]}" > "${temp_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+        echo "saving file list: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+        printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
 
         # Reset the file list and group size
         file_list=()
@@ -47,17 +53,18 @@ split_files() {
       file_list+=("$file")
       group_size=$(($group_size + $size))
     fi
-  done
+  done < ${file_list_file}
 
   # Save the final group to a text file
-  printf "%s\n" "${file_list[@]}" > "${temp_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+  echo "saving file list: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+  printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
 }
 
 # # Set the target directory
 # target_dir="/path/to/directory"
 
 # # Set the config directory
-# temp_dir="/path/to/temp/directory"
+# config_dir="/path/to/temp/directory"
 
 # # Set the minimum modification date and maximum total file size
 # min_date=1609459200  # January 1, 2021 in Unix timestamp format
@@ -70,4 +77,4 @@ split_files() {
 # split_file_suffix=".txt"
 
 # # Call the function
-# split_files "$target_dir" "$temp_dir" "$min_date" "$max_date" "$max_size" "$split_file_prefix" "$split_file_suffix"
+# split_files "$target_dir" "$config_dir" "$min_date" "$max_date" "$max_size" "$split_file_prefix" "$split_file_suffix"
