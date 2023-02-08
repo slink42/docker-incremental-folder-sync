@@ -3,17 +3,28 @@
 # import split_files function
 source /usr/local/bin/split_files.sh
 
+
 # Define the function
 save_to_backup() {
 
   # Set the target directory
   source_dir=$1
   config_dir=$2
-  restore_rclone_remote=${3:-"SECURE_BACKUP"}
-  restore_rclone_path=${4:-""}
+  rclone_remote=${3:-"SECURE_BACKUP"}
+  rclone_path=${4:-""}
   # max file size, save into another tar if total size will exceed the thershold kB (5GB)
   max_file_size=${5:-"5242880"}
   temp_dir=${6:-"$1/backup"}
+
+  
+# start of tar files used for library images backup
+  tar_filename_start=${7:-"library_images"}
+
+  # date and time strings
+  current_datetime_format="%Y-%m-%d %H%M"
+  current_datetime=$(date +"${current_datetime_format}")
+  current_date=$(date +"%Y-%m-%d")
+  current_time=$(date +"%H%M")
   
   # mode=${7:-"stream extract"}
 
@@ -37,13 +48,13 @@ save_to_backup() {
   [ -d "${source_dir}" ] || (echo "Aborting, source directory doesn't exit: ${source_dir}")
 
   # Make sure tar target dir exists by creating it
-  rclone mkdir "${restore_rclone_remote}:${restore_rclone_path}"
+  rclone mkdir "${rclone_remote}:${rclone_path}"
 
   # Use the rclone command to list the tar files in the remote. You will need to specify the name of the remote, as well as the path to the directory where the tar files are stored.
-  tar_files=$(rclone lsf "${restore_rclone_remote}:${restore_rclone_path}" --config "${restore_rclone_config}"  --filter "+ *.tar.gz" --filter "+ *.tar" --filter "- *" | while read line; do   echo "${line// /\\ }"; done)
+  tar_files=$(rclone lsf "${rclone_remote}:${rclone_path}" --config "${restore_rclone_config}"  --filter "+ *.tar.gz" --filter "+ *.tar" --filter "- *" | while read line; do   echo "${line// /\\ }"; done)
 
   echo "$(date) - starting save_to_backup"
-  echo "source: ${restore_rclone_remote}:${restore_rclone_path}"
+  echo "source: ${rclone_remote}:${rclone_path}"
   echo "target: ${source_dir}"
 
   # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
@@ -57,6 +68,8 @@ save_to_backup() {
   min_file_mod_time=$(date --date="${last_tar_date}")
 
   new_tar_file_no_ext="${tar_filename_start}_${last_tar_date}_to_${new_tar_date}"
+
+  cd "${source_dir}"
 
   find "./Metadata" "./Media" -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
   echo "$(date) Found $( cat "${file_list_file}" | wc -l) files. Adding to tar ${new_tar_file_no_ext}"
@@ -108,10 +121,10 @@ save_to_backup() {
       fi
     done
 
-    echo "$(date) ****** Syncing backup tar files to rclone remote: "${restore_rclone_remote}:${restore_rclone_path}" ******"
-    echo "$(date) ****** Syncing backup tar files to rclone remote: "${restore_rclone_remote}:${restore_rclone_path}" ******"  >> "${log_file}"
+    echo "$(date) ****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"
+    echo "$(date) ****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"  >> "${log_file}"
 
-    rclone sync "${temp_dir}" "${restore_rclone_remote}:${restore_rclone_path}" \
+    rclone sync "${temp_dir}" "${rclone_remote}:${rclone_path}" \
       --config "${restore_rclone_config}" \
       --progress \
       --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
@@ -143,7 +156,7 @@ max_file_size="$5"
 temp_dir="$6"
 
 source_dir="$1"
-config_dir"$2"
+config_dir="$2"
 rclone_remote="$3"
 rclone_path="$4"
 max_file_size="$5"

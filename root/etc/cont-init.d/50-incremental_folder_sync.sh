@@ -65,7 +65,7 @@ fi
 
 
 if [ "${mode}" = "BACKUP" ]; then
-  source_dir="$target_dir"
+
   # exec s6-setuidgid abc \
   #   /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$max_file_size" "$temp_dir"
 
