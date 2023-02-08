@@ -13,11 +13,18 @@ save_to_backup() {
   restore_rclone_path=${4:-""}
   # max file size, save into another tar if total size will exceed the thershold kB (5GB)
   max_file_size=${5:-"5242880"}
-  temp_dir=${6:-$1}
+  temp_dir=${6:-"$1/backup"}
+  
   # mode=${7:-"stream extract"}
+
+  log_file=${7:="${config_dir}/save_to_backup.log"}
+
+  # If the temp_dir doesn't exist create it
+  [ -d "$temp_dir" ] || mkdir "$temp_dir"
 
   # If the config_dir doesn't exist create it
   [ -d "$config_dir" ] || mkdir "$config_dir"
+
   file_list_file="${config_dir}/source_files.txt"
 
   # check for rclone config in config_dir
@@ -27,7 +34,7 @@ save_to_backup() {
     (echo "Configuration file doesn't exist, but rclone will use this path: /config/rclone.conf") && \
     restore_rclone_config="/config/rclone.conf"
 
-  [ -d "${target_dir}" ] || (echo "Aborting, source directory doesn't exit: ${source_dir}")
+  [ -d "${source_dir}" ] || (echo "Aborting, source directory doesn't exit: ${source_dir}")
 
   # Make sure tar target dir exists by creating it
   rclone mkdir "${restore_rclone_remote}:${restore_rclone_path}"
@@ -39,12 +46,10 @@ save_to_backup() {
   echo "source: ${restore_rclone_remote}:${restore_rclone_path}"
   echo "target: ${source_dir}"
 
-  
-  
   # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
   last_tar_file=$(echo "$tar_files" | sort | tail -n 1)
   last_tar_date=$(echo $last_tar_file | cut -d "." -f1 | cut -d "_" -f5)
-  
+ 
   last_tar_date=${last_tar_date:-"1970-01-01 0000"}
   new_tar_date=${current_datetime}
 
@@ -53,60 +58,64 @@ save_to_backup() {
 
   new_tar_file_no_ext="${tar_filename_start}_${last_tar_date}_to_${new_tar_date}"
 
-
   find "./Metadata" "./Media" -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
   echo "$(date) Found $( cat "${file_list_file}" | wc -l) files. Adding to tar ${new_tar_file_no_ext}"
 
-  
-  
   # # Set the target directory
-# target_dir="/path/to/directory"
+  # source_dir="/path/to/directory"
 
-# # Set the minimum modification date and maximum total file size
-# min_date=1609459200  # January 1, 2021 in Unix timestamp format
-# max_date=1640995200  # January 1, 2022 in Unix timestamp format
-# max_size=53687091200  # 50GB in bytes
+  # # Set the minimum modification date and maximum total file size
+  # min_date=1609459200  # January 1, 2021 in Unix timestamp format
+  # max_date=1640995200  # January 1, 2022 in Unix timestamp format
+  # max_size=53687091200  # 50GB in bytes
 
-split_file_prefix="group-"
-split_file_suffix=".txt"
+  split_file_prefix="group-"
+  split_file_suffix=".txt"
 
-# Call the function
-rm -f "${config_dir}/${split_file_prefix}*${split_file_suffix}"
-split_files "$target_dir" "$temp_dir" "$min_date" "$max_date" "$max_size" "$split_file_prefix" "$split_file_suffix"
+  # Call the function
+  rm -f "${config_dir}/${split_file_prefix}*${split_file_suffix}"
+  split_files "${source_dir}" "${temp_dir}" "${min_date}" "${max_date}" "${max_size}" "${split_file_prefix}" "${split_file_suffix}"
 
+  split "${file_list_file}" -a 3 -d -l 100000 "${config_dir}/split_file_list_"
 
-#   split "${file_list_file}" -a 3 -d -l 100000 "${config_dir}/split_file_list_"
+  for split_list_file in $(ls "${config_dir}/split_file_list_*")
+  do
+      split_number="${split_list_file##*_}"
+      split_new_tar_file="${new_tar_file_no_ext}_${split_number}.tar.gz"
+      echo "$(date) Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}"
+  #     echo "$(date) Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}" >> "${log_file}"
+      tar --create -z --file="${split_new_tar_file}" --files-from="${split_list_file}"
+      stat "${split_new_tar_file}"
 
-# for split_list_file in $(ls "${config_dir}/split_file_list_*")
-# do
-#     split_number="${split_list_file##*_}"
-#     split_new_tar_file="${new_tar_file_no_ext}_${split_number}.tar.gz"
-#     echo "$(date) Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}"
-# #     echo "$(date) Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}" >> "$LOG_FILE"
-#     tar --create -z --file="${split_new_tar_file}" --files-from="${split_list_file}"
-#     stat "${split_new_tar_file}"
-# #
-#     # if  gzip -v -t "${split_new_tar_file}" 2>  /dev/null; then
-#     #     echo "tar gzip compression tested ok, moving ${split_new_tar_file} to dir ${TAR_BACKUP_FOLDER}"
-# #         mv "$split_new_tar_file" "$TAR_BACKUP_FOLDER/"
-# #         echo "$(date) ****** Finished image Libary tar file load ******" >> "$LOG_FILE"
-# #         echo "" >> "$LOG_FILE"
-# #         echo "files added to tar:" >> "$LOG_FILE"
-# #         echo "" >> "$LOG_FILE"
-# #         cat "$split_list_file" >> "$LOG_FILE"backup
-# #         mv "$LOG_FILE" "$TAR_BACKUP_FOLDER/"
-# #         rm "$split_list_file"
-#     else
-# #         echo "error - tar gzip compression failed when tested: removing ${split_new_tar_file}" >> "$LOG_FILE"
-# #         echo "error - tar gzip compression failed when tested, removing ${split_new_tar_file}"
-# #
-# #         echo "$(date) ****** Finished image Libary tar file rebuild ******"  >> "$LOG_FILE"
-# #
-# #         rm "$split_new_tar_file"
-# #         #break
-# #     fi
-#   done
+      if  gzip -v -t "${split_new_tar_file}" 2>  /dev/null; then
+          echo "tar gzip compression tested ok, moving ${split_new_tar_file} to dir ${temp_dir}"
+          mv "$split_new_tar_file" "${temp_dir}/"
+          echo "$(date) ****** Finished image Libary tar file load ******" >> "${log_file}"
+          echo "" >> "${log_file}"
+          echo "files added to tar:" >> "${log_file}"
+          echo "" >> "${log_file}"
+          cat "$split_list_file" >> "${log_file}"backup
+          mv "${log_file}" "${temp_dir}/"
+          rm "$split_list_file"
+      else
+          echo "error - tar gzip compression failed when tested: removing ${split_new_tar_file}" >> "${log_file}"
+          echo "error - tar gzip compression failed when tested, removing ${split_new_tar_file}"
+  
+          echo "$(date) ****** Finished image Libary tar file rebuild ******"  >> "${log_file}"
+  
+          rm "$split_new_tar_file"
+          #break
+      fi
+    done
 
+    echo "$(date) ****** Syncing backup tar files to rclone remote: "${restore_rclone_remote}:${restore_rclone_path}" ******"
+    echo "$(date) ****** Syncing backup tar files to rclone remote: "${restore_rclone_remote}:${restore_rclone_path}" ******"  >> "${log_file}"
+
+    rclone sync "${temp_dir}" "${restore_rclone_remote}:${restore_rclone_path}" \
+      --config "${restore_rclone_config}" \
+      --progress \
+      --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
+      --filter "- *"
 
   echo "$(date) - completed save_to_backup"
 }
@@ -133,13 +142,12 @@ max_file_size="$5"
 # temp_dir="/tmp"
 temp_dir="$6"
 
-source_dir=""
+source_dir="$1"
 config_dir"$2"
 rclone_remote="$3"
 rclone_path="$4"
 max_file_size="$5"
 temp_dir="$6"
 
-
 # Call the function
-save_to_backup "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$max_file_size" "$temp_dir"
+save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${max_file_size}" "${temp_dir}"

@@ -8,7 +8,8 @@
 
 
 # Define the local path where the extracted tar files will be saved using the EXTRACTED_FILES_PATH environment variable:
-target_dir=$EXTRACTED_FILES_PATH
+source_dir=${SOURCE_FILES_PATH:-"$target_dir"}
+target_dir=${EXTRACTED_FILES_PATH:-"$source_dir"}
 config_dir=${CONFIG_PATH:-"/config"}
 temp_dir=${TMP_PATH:-"${target_dir}"}
 mode=${MODE:-"RESTORE"} #BACKUP/RESTORE
