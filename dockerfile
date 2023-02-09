@@ -95,6 +95,6 @@ ENV \
     DATE_FORMAT="+%4Y/%m/%d %H:%M:%S"
 
 VOLUME /config /log
-WORKDIR /CONFIG_PATH
+WORKDIR /${CONFIG_PATH}
 
 ENTRYPOINT ["/init"]

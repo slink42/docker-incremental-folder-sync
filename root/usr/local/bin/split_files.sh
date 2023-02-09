@@ -1,32 +1,33 @@
 #!/bin/bash
 
 # Define the function
-split_files() {
+function split_files() {
 
   # Set the target directory
-  source_dir=$1
+  split_source_dir=$1
   config_dir=$2
 
   # Set the minimum modification date, maximum modification date and maximum total file size
-  min_date=${3:-"1671856158"} #1970-01-01
+  min_date=${3:-"0"} #1970-01-01
   max_date=${4:-"1671856158"} #now
   max_size=${5:-"5242880"}
-  split_file_prefix=${6:-'group-'}
+  split_file_prefix=${6:-'group_'}
   split_file_suffix=${7:-'.txt'}
-  
 
   # Initialize variables
   file_list=()
   group_size=0
   group_num=1
 
+  echo "min date: $min_date max date: $max_date"
   
   file_list_file="${config_dir}/${split_file_prefix}source_files.txt"
-  find "${source_dir}"  -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
-  echo "$(date) Found $( cat "${file_list_file}" | wc -l) files in ${source_dir} for selected date range."
+  find "${split_source_dir}"  -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
+  echo "$(date) Found $( cat "${file_list_file}" | wc -l) files in ${split_source_dir} for selected date range. Saved list to: ${file_list_file}"
 
   # Iterate over the files in the target directory
   while read file; do
+
     # Get the modification time of the file
     mtime=$(stat -c %Y "$file")
 
@@ -37,9 +38,10 @@ split_files() {
 
       # Check if adding the file to the current group would exceed the maximum size
       if [ $(($group_size + $size)) -gt $max_size ]; then
+        
         # Save the current group to a text file
-        echo "saving file list: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
         printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+        echo "$(date) Split $( cat "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}" | wc -l) files into file list file: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
 
         # Reset the file list and group size
         file_list=()
@@ -52,12 +54,14 @@ split_files() {
       # Add the file to the file list and update the group size
       file_list+=("$file")
       group_size=$(($group_size + $size))
+     # echo "split group: $group_num - size: $group_size / $max_size - added: $(head -c 100 <<<${file})"
     fi
   done < ${file_list_file}
 
   # Save the final group to a text file
-  echo "saving file list: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+  echo "$(date) Split $( cat "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}" | wc -l) files into file list file: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
   printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+  echo "$(date) Split files done"
 }
 
 # # Set the target directory

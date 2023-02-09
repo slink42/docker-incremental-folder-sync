@@ -5,7 +5,7 @@ source /usr/local/bin/split_files.sh
 
 
 # Define the function
-save_to_backup() {
+function save_to_backup() {
 
   # Set the target directory
   source_dir=$1
@@ -16,9 +16,10 @@ save_to_backup() {
   max_file_size=${5:-"5242880"}
   temp_dir=${6:-"$1/backup"}
 
-  
+
 # start of tar files used for library images backup
   tar_filename_start=${7:-"library_images"}
+  split_file_suffix=".txt"
 
   # date and time strings
   current_datetime_format="%Y-%m-%d %H%M"
@@ -83,17 +84,19 @@ save_to_backup() {
   # max_date=1640995200  # January 1, 2022 in Unix timestamp format
   # max_size=53687091200  # 50GB in bytes
 
-  split_file_prefix="group-"
-  split_file_suffix=".txt"
+  
+
+  ## TODO
+  # for subfolder in $(ls "${source_dir}"); do
 
   # Call the function
-  rm -f "${config_dir}/${split_file_prefix}*${split_file_suffix}"
+  rm ${config_dir}/${tar_filename_start}*${split_file_suffix}* 2>/dev/null
   
-  split_files "./Metadata" "${temp_dir}" "${min_date}" "${max_date}" "${max_size}" "${split_file_prefix}metadata-" "${split_file_suffix}"
-  split_files "./Media" "${temp_dir}" "${min_date}" "${max_date}" "${max_size}" "${split_file_prefix}media-" "${split_file_suffix}"
+  split_files "./Metadata" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_metadata_" "${split_file_suffix}"
+  split_files "./Media" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_media_" "${split_file_suffix}"
   #split "${file_list_file}" -a 3 -d -l 100000 "${config_dir}/split_file_list_"
 
-  for split_list_file in $(ls "${config_dir}/${split_file_prefix}*${split_file_suffix}")
+  for split_list_file in $(ls ${config_dir}/${tar_filename_start}*${split_file_suffix}*)
   do
       split_number="${split_list_file##*_}"
       split_new_tar_file="${new_tar_file_no_ext}_${split_number}.tar.gz"
