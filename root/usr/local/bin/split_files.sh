@@ -59,8 +59,8 @@ function split_files() {
   done < ${file_list_file}
 
   # Save the final group to a text file
+  printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
   echo "$(date) Split $( cat "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}" | wc -l) files into file list file: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
-  printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
   echo "$(date) Split files done"
 }
 
