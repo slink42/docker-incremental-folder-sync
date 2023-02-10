@@ -10,7 +10,7 @@ function split_files() {
   # Set the minimum modification date, maximum modification date and maximum total file size
   min_date=${3:-"0"} #1970-01-01
   max_date=${4:-"1671856158"} #now
-  max_size=${5:-"5242880"}
+  max_size=${5:-"5000000000"} #5GB in bytes
   split_file_prefix=${6:-'group_'}
   split_file_suffix=${7:-'.txt'}
 
