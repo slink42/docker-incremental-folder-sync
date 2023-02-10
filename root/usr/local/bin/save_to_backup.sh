@@ -13,7 +13,7 @@ function save_to_backup() {
   rclone_remote=${3:-"SECURE_BACKUP"}
   rclone_path=${4:-""}
   # max file size, save into another tar if total size will exceed the thershold kB (5GB)
-  max_file_size=${5:-"5242880"}
+  max_file_size=${5:-"5000000000"}
   temp_dir=${6:-"$1/backup"}
 
 
