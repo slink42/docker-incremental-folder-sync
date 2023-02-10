@@ -113,8 +113,6 @@ function save_to_backup() {
     split "${file_list_file}" -a 3 -d -l ${max_file_size} "${config_dir}/${tar_filename_start}_${subfolder}_${split_file_suffix}_"
   fi
 
-  subfolders="Media Metadata"
-
   for split_list_file in $(ls ${config_dir}/${tar_filename_start}*${split_file_suffix}*)
   do
       split_number="${split_list_file##*_}"
