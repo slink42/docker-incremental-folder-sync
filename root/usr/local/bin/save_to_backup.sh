@@ -29,7 +29,7 @@ function save_to_backup() {
   
   # mode=${7:-"stream extract"}
 
-  log_file=${7:="${config_dir}/save_to_backup.log"}
+  log_file=${8:-"${config_dir}/save_to_backup.log"}
 
   # If the temp_dir doesn't exist create it
   [ -d "$temp_dir" ] || mkdir "$temp_dir"
