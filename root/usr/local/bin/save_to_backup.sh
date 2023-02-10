@@ -12,13 +12,23 @@ function save_to_backup() {
   config_dir=$2
   rclone_remote=${3:-"SECURE_BACKUP"}
   rclone_path=${4:-""}
-  # max file size, save into another tar if total size will exceed the thershold kB (5GB)
-  max_file_size=${5:-"5000000000"}
-  temp_dir=${6:-"$1/backup"}
 
+  temp_dir=${5:-"$1/backup"}
+  
+  # max_file_type=count
+  # save into another tar if total file ocunt will exceed the threshold of max_file_size files
+  #
+  #
+  # max_file_type=bytes
+  # save into another tar if total size will exceed the threshold of max_file_size bytes. Waring, this is VERY SLOw compared to count.
+  max_file_type=${7:-"count"} # count/bytes
+  max_file_size=${6:-"1000000"} # 1000000 files
+  if [ ${max_file_type} -eq "bytes" ]; then
+    max_file_size=${6:-"5000000000"} # 5GB
+  fi
 
 # start of tar files used for library images backup
-  tar_filename_start=${7:-"library_images"}
+  tar_filename_start=${8:-"library_images"}
   split_file_suffix=".txt"
 
   # date and time strings
@@ -164,8 +174,10 @@ source_dir="$1"
 config_dir="$2"
 rclone_remote="$3"
 rclone_path="$4"
-max_file_size="$5"
-temp_dir="$6"
+temp_dir="$5"
+max_file_size="$6"
+max_file_size="$7"
+log_file=$8
 
 # Call the function
-save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${max_file_size}" "${temp_dir}"
+save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${temp_dir}" "${max_file_size}" "${max_file_type}" "${log_file}"
