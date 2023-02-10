@@ -40,8 +40,9 @@ function split_files() {
       if [ $(($group_size + $size)) -gt $max_size ]; then
         
         # Save the current group to a text file
-        printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
-        echo "$(date) Split $( cat "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}" | wc -l) files into file list file: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+        split_file_name="${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
+        printf "%s\n" "${file_list[@]}" > "${split_file_name}"
+        echo "$(date) Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}"
 
         # Reset the file list and group size
         file_list=()
@@ -49,6 +50,7 @@ function split_files() {
 
         # Increment the group number
         group_num=$((group_num + 1))
+        split_file_name="${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
       fi
 
       # Add the file to the file list and update the group size
@@ -59,8 +61,10 @@ function split_files() {
   done < ${file_list_file}
 
   # Save the final group to a text file
-  printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
-  echo "$(date) Split $( cat "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}" | wc -l) files into file list file: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+  split_file_name="${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
+  printf "%s\n" "${file_list[@]}" > "${split_file_name}"
+  echo "$(date) Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}"
+
   echo "$(date) Split files done"
 }
 
