@@ -23,23 +23,24 @@ function save_to_backup() {
   # save into another tar if total size will exceed the threshold of max_file_size bytes. Waring, this is VERY SLOw compared to count.
   max_file_type=${7:-"count"} # count/bytes
   max_file_size=${6:-"1000000"} # 1000000 files
-  if [ ${max_file_type} -eq "bytes" ]; then
+  if [ ${max_file_type} == "bytes" ]; then
     max_file_size=${6:-"5000000000"} # 5GB
   fi
 
-# start of tar files used for library images backup
-  tar_filename_start=${8:-"library_images"}
+  # relative subfolder to path to include in backup
+  path_filter=${8:-"."}
+
+  # start of tar files used for library images backup
+  tar_filename_start=${9:-"backup"}
   split_file_suffix=".txt"
+
+  log_file=${10:-"${config_dir}/save_to_backup.log"}
 
   # date and time strings
   current_datetime_format="%Y-%m-%d %H%M"
   current_datetime=$(date +"${current_datetime_format}")
   current_date=$(date +"%Y-%m-%d")
   current_time=$(date +"%H%M")
-  
-  # mode=${7:-"stream extract"}
-
-  log_file=${8:-"${config_dir}/save_to_backup.log"}
 
   # If the temp_dir doesn't exist create it
   [ -d "$temp_dir" ] || mkdir "$temp_dir"
@@ -102,9 +103,17 @@ function save_to_backup() {
   # Call the function
   rm ${config_dir}/${tar_filename_start}*${split_file_suffix}* 2>/dev/null
   
-  split_files "./Metadata" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_metadata_" "${split_file_suffix}"
-  split_files "./Media" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_media_" "${split_file_suffix}"
-  #split "${file_list_file}" -a 3 -d -l 100000 "${config_dir}/split_file_list_"
+  # split_files "./Metadata" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_metadata_" "${split_file_suffix}"
+  # split_files "./Media" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_media_" "${split_file_suffix}"
+  
+
+  if [ "${max_file_type}" == "bytes" ]; then
+    split_files "${path_filter}" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}" "${split_file_suffix}"
+  else
+    split "${file_list_file}" -a 3 -d -l ${max_file_size} "${config_dir}/${tar_filename_start}_${subfolder}_${split_file_suffix}_"
+  fi
+
+  subfolders="Media Metadata"
 
   for split_list_file in $(ls ${config_dir}/${tar_filename_start}*${split_file_suffix}*)
   do
@@ -177,7 +186,9 @@ rclone_path="$4"
 temp_dir="$5"
 max_file_size="$6"
 max_file_size="$7"
-log_file=$8
+path_filter="$8"
+tar_filename_start="$9"
+log_file="${10}"
 
 # Call the function
-save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${temp_dir}" "${max_file_size}" "${max_file_type}" "${log_file}"
+save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${temp_dir}" "${max_file_size}" "${max_file_type}" "${path_filter}" "${tar_filename_start}" "${log_file}"
