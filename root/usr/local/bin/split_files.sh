@@ -11,7 +11,7 @@ function split_files() {
   min_date=${3:-"0"} #1970-01-01
   max_date=${4:-"1671856158"} #now
   max_size=${5:-"5000000000"} #5GB in bytes
-  split_file_prefix=${6:-'group_'}
+  split_file_prefix=${6:-'group'}
   split_file_suffix=${7:-'.txt'}
 
   # Initialize variables
@@ -21,7 +21,7 @@ function split_files() {
 
   echo "min date: $min_date max date: $max_date"
   
-  file_list_file="${config_dir}/${split_file_prefix}source_files.txt"
+  file_list_file="${config_dir}/${split_file_prefix}_source_files.txt"
   find "${split_source_dir}"  -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
   echo "$(date) Found $( cat "${file_list_file}" | wc -l) files in ${split_source_dir} for selected date range. Saved list to: ${file_list_file}"
 
@@ -40,7 +40,7 @@ function split_files() {
       if [ $(($group_size + $size)) -gt $max_size ]; then
         
         # Save the current group to a text file
-        printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
+        printf "%s\n" "${file_list[@]}" > "${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
         echo "$(date) Split $( cat "${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}" | wc -l) files into file list file: ${config_dir}/${split_file_prefix}${group_num}${split_file_suffix}"
 
         # Reset the file list and group size

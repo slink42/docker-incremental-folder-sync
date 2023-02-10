@@ -36,7 +36,7 @@ rclone_path=${RCLONE_PATH:-""}
 
 # Define the max nuber of fiels to include for backup tar file, saves remaining into other tar(s) if total file count will exceed the thershold
 max_file_type="count"
-max_file_size=${MAX_TAR_FILE_FILE_COUNT:-"100000000000"}
+max_file_size=${MAX_TAR_FILE_FILE_COUNT:-"5000000000"}
 if [ -z "$MAX_TAR_FILE_FILE_COUNT" ] && ! [ -z "$MAX_TAR_FILE_SPACE" ]; then
   # Define the max size for backup tar file, saves remaining into other tar(s) if total size will exceed the thershold kB (5GB)
   max_file_size=${MAX_TAR_FILE_SPACE:-"5000000000"}

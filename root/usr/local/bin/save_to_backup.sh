@@ -110,7 +110,7 @@ function save_to_backup() {
   if [ "${max_file_type}" == "bytes" ]; then
     split_files "${path_filter}" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}" "${split_file_suffix}"
   else
-    split "${file_list_file}" -a 3 -d -l ${max_file_size} "${config_dir}/${tar_filename_start}_${subfolder}_${split_file_suffix}_"
+    split "${file_list_file}" -a 3 -d -l ${max_file_size} "${config_dir}/${tar_filename_start}_${split_file_suffix}_"
   fi
 
   for split_list_file in $(ls ${config_dir}/${tar_filename_start}*${split_file_suffix}*)
