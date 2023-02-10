@@ -34,13 +34,15 @@ function save_to_backup() {
   tar_filename_start=${9:-"backup"}
   split_file_suffix=".txt"
 
-  log_file=${10:-"${config_dir}/save_to_backup.log"}
-
   # date and time strings
   current_datetime_format="%Y-%m-%d %H%M"
   current_datetime=$(date +"${current_datetime_format}")
   current_date=$(date +"%Y-%m-%d")
   current_time=$(date +"%H%M")
+
+  log_file=${10:-"${config_dir}/save_to_backup_${current_datetime}.log"}
+  log_file_base=$(basename "${log_file}")
+  log_file_base=$(echo "${log_file_base%.*}")
 
   # If the temp_dir doesn't exist create it
   [ -d "$temp_dir" ] || mkdir "$temp_dir"
@@ -103,45 +105,49 @@ function save_to_backup() {
   # Call the function
   rm ${config_dir}/${tar_filename_start}*${split_file_suffix}* 2>/dev/null
   
-  # split_files "./Metadata" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_metadata_" "${split_file_suffix}"
-  # split_files "./Media" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}_media_" "${split_file_suffix}"
-  
-
   if [ "${max_file_type}" == "bytes" ]; then
     split_files "${path_filter}" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}" "${split_file_suffix}"
   else
     split "${file_list_file}" -a 3 -d -l ${max_file_size} "${config_dir}/${tar_filename_start}_${split_file_suffix}_"
   fi
 
-  for split_list_file in $(ls ${config_dir}/${tar_filename_start}*${split_file_suffix}*)
+  for split_list_file in $(ls ${config_dir}/${tar_filename_start}_*${split_file_suffix}*)
   do
       split_number="${split_list_file##*_}"
+      
+      # remove file extension if there is one
+      split_number=$(echo "${split_number%.*}")
+
       split_new_tar_file="${new_tar_file_no_ext}_${split_number}.tar.gz"
+
       echo "$(date) Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}"
-  #     echo "$(date) Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}" >> "${log_file}"
+      echo "$(date) Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}" >> "${log_file}"
+
       tar --create -z --file="${split_new_tar_file}" --files-from="${split_list_file}"
+
       stat "${split_new_tar_file}"
+      stat "${split_new_tar_file}" >> "${log_file}"
 
       if  gzip -v -t "${split_new_tar_file}" 2>  /dev/null; then
           echo "tar gzip compression tested ok, moving ${split_new_tar_file} to dir ${temp_dir}"
-          mv "$split_new_tar_file" "${temp_dir}/"
-          echo "$(date) ****** Finished image Libary tar file load ******" >> "${log_file}"
-          echo "" >> "${log_file}"
-          echo "files added to tar:" >> "${log_file}"
-          echo "" >> "${log_file}"
-          cat "$split_list_file" >> "${log_file}"backup
-          mv "${log_file}" "${temp_dir}/"
-          rm "$split_list_file"
+          # Move tar file to tmp dir for syncing to rclone remote
+          mv "${split_new_tar_file}" "${temp_dir}/"
+          # Save file list as log
+          mv "${split_list_file}" "${temp_dir}/${log_file_base}_split_${split_number}.done"
       else
           echo "error - tar gzip compression failed when tested: removing ${split_new_tar_file}" >> "${log_file}"
           echo "error - tar gzip compression failed when tested, removing ${split_new_tar_file}"
-  
-          echo "$(date) ****** Finished image Libary tar file rebuild ******"  >> "${log_file}"
-  
-          rm "$split_new_tar_file"
+
+          # Save file list as log
+          mv "${split_list_file}" "${temp_dir}/${log_file_base}_split_${split_number}.failed"
+
           #break
       fi
+      echo "$(date) ****** Finished image Libary tar file rebuild for ${split_new_tar_file} ******"  >> "${log_file}"
+      echo "" >> "${log_file}"
+      echo "" >> "${log_file}"
     done
+
 
     echo "$(date) ****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"
     echo "$(date) ****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"  >> "${log_file}"
@@ -153,6 +159,9 @@ function save_to_backup() {
       --filter "- *"
 
   echo "$(date) - completed save_to_backup"
+  echo "$(date) - completed save_to_backup" >> "${log_file}"
+  
+  mv "${log_file}" "${temp_dir}/"
 }
 
 # # Set the target directory
