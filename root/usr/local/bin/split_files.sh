@@ -21,7 +21,7 @@ function split_files() {
   # bytes - (very slow) - max_size is used as hard limit for fiels to include in each batch
   max_size=${6:-"5000000000"} #5GB in bytes is used with split_mode bytes_avg/bytes
   split_file_prefix=${7:-'group'}
-  split_file_suffix=${8:-'.txt'}
+  split_file_suffix=${8:-'.splitfilelist'}
 
   # Initialize variables
   file_list=()
@@ -30,9 +30,9 @@ function split_files() {
 
   # Populate list file with all files meeting criteria
   logf "${split_log_tag}" "min file timestamp: $min_file_mod_time max file timestamp: $max_file_mod_time"
-  file_list_file="${config_dir}/${split_file_prefix}_source_files.txt"
+  file_list_file="${config_dir}/${split_file_prefix}.filelist"
   find "${split_source_dir}"  -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
-  total_files=$( cat "${file_list_file}" | wc -l)
+  total_files=$(cat "${file_list_file}" | wc -l)
   logf "${split_log_tag}" "Found ${total_files} files in ${split_source_dir} for selected date range. Saved list to: ${file_list_file}"
 
   # Split file list file into smaller batches of file list files

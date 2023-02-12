@@ -17,12 +17,11 @@ function save_to_backup() {
   
   # max_file_type=count
   # save into another tar if total file ocunt will exceed the threshold of max_file_size files
-  #
   # max_file_type=bytes
   # save into another tar if total size will exceed the threshold of max_file_size bytes. Waring, this is VERY SLOw compared to count.
   max_file_type=${7:-"count"} # count/bytes
   max_file_size=${6:-"1000000"} # 1000000 files
-  if [ ${max_file_type} == "bytes" ]; then
+  if [ ${max_file_type} == "bytes" ] || [ ${max_file_type} == "bytes_avg" ]; then
     max_file_size=${6:-"5000000000"} # 5GB
   fi
 
@@ -31,7 +30,7 @@ function save_to_backup() {
 
   # start of tar files used for library images backup
   tar_filename_start=${9:-"backup"}
-  split_file_suffix=".txt"
+  split_file_suffix=".splitfilelist"
 
   # date and time strings
   current_datetime_format="%Y-%m-%d %H%M"
@@ -82,7 +81,7 @@ function save_to_backup() {
   min_file_mod_time=$(date --date="${last_tar_date}")
 
   new_tar_file_no_ext="${tar_filename_start}_${last_tar_date}_to_${new_tar_date}"
-  logf "${log_tag}" "$(date) New tar files name prefix ${new_tar_file_no_ext}"
+  logf "${log_tag}" "New tar files name prefix ${new_tar_file_no_ext}"
   
   cd "${source_dir}"
 
@@ -138,7 +137,8 @@ function save_to_backup() {
   rclone sync "${local_backup_dir}" "${rclone_remote}:${rclone_path}" \
     --config "${restore_rclone_config}" \
     --progress \
-    --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
+   # --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
+    --filter "+ ${tar_filename_start}_*.tar.gz" \
     --filter "- *"
 
   logf "${log_tag}" "completed save_to_backup"
