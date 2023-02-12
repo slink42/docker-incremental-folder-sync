@@ -137,8 +137,10 @@ function save_to_backup() {
   rclone sync "${local_backup_dir}" "${rclone_remote}:${rclone_path}" \
     --config "${restore_rclone_config}" \
     --progress \
-   # --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
-    --filter "+ ${tar_filename_start}_*.tar.gz" \
+# Only tars made in this session
+    --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
+# All tars with matching prefix 
+#    --filter "+ ${tar_filename_start}_*.tar.gz" \
     --filter "- *"
 
   logf "${log_tag}" "completed save_to_backup"
