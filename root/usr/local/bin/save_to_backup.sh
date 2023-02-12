@@ -13,7 +13,7 @@ function save_to_backup() {
   rclone_remote=${3:-"SECURE_BACKUP"}
   rclone_path=${4:-""}
 
-  temp_dir=${5:-"$1/backup"}
+  local_backup_dir=${5:-"$1/backup"}
   
   # max_file_type=count
   # save into another tar if total file ocunt will exceed the threshold of max_file_size files
@@ -44,8 +44,8 @@ function save_to_backup() {
   log_file_base=$(basename "${log_file}")
   log_file_base=$(echo "${log_file_base%.*}")
 
-  # If the temp_dir doesn't exist create it
-  [ -d "$temp_dir" ] || mkdir "$temp_dir"
+  # If the local_backup_dir doesn't exist create it
+  [ -d "$local_backup_dir" ] || mkdir "$local_backup_dir"
 
   # If the config_dir doesn't exist create it
   [ -d "$config_dir" ] || mkdir "$config_dir"
@@ -68,8 +68,9 @@ function save_to_backup() {
   tar_files=$(rclone lsf "${rclone_remote}:${rclone_path}" --config "${restore_rclone_config}"  --filter "+ *.tar.gz" --filter "+ *.tar" --filter "- *" | while read line; do   echo "${line// /\\ }"; done)
 
   echo "$(date) - starting save_to_backup"
-  echo "source: ${rclone_remote}:${rclone_path}"
-  echo "target: ${source_dir}"
+  echo "source: ${source_dir}"
+  echo "local target: ${local_backup_dir}"
+  echo "target: ${rclone_remote}:${rclone_path}"
 
   # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
   last_tar_file=$(echo "$tar_files" | sort | tail -n 1)
@@ -108,6 +109,11 @@ function save_to_backup() {
   if [ "${max_file_type}" == "bytes" ]; then
     split_files "${path_filter}" "${config_dir}" "${min_date}" "${max_date}" "${max_size}" "${tar_filename_start}" "${split_file_suffix}"
   else
+    echo "min date: $min_date max date: $max_date"
+
+    file_list_file="${config_dir}/${split_file_prefix}_source_files.txt"
+
+    find "${split_source_dir}"  -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
     split "${file_list_file}" -a 3 -d -l ${max_file_size} "${config_dir}/${tar_filename_start}_${split_file_suffix}_"
   fi
 
@@ -129,17 +135,17 @@ function save_to_backup() {
       stat "${split_new_tar_file}" >> "${log_file}"
 
       if  gzip -v -t "${split_new_tar_file}" 2>  /dev/null; then
-          echo "tar gzip compression tested ok, moving ${split_new_tar_file} to dir ${temp_dir}"
+          echo "tar gzip compression tested ok, moving ${split_new_tar_file} to dir ${local_backup_dir}"
           # Move tar file to tmp dir for syncing to rclone remote
-          mv "${split_new_tar_file}" "${temp_dir}/"
+          mv "${split_new_tar_file}" "${local_backup_dir}/"
           # Save file list as log
-          mv "${split_list_file}" "${temp_dir}/${log_file_base}_split_${split_number}.done"
+          mv "${split_list_file}" "${local_backup_dir}/${log_file_base}_split_${split_number}.done"
       else
           echo "error - tar gzip compression failed when tested: removing ${split_new_tar_file}" >> "${log_file}"
           echo "error - tar gzip compression failed when tested, removing ${split_new_tar_file}"
 
           # Save file list as log
-          mv "${split_list_file}" "${temp_dir}/${log_file_base}_split_${split_number}.failed"
+          mv "${split_list_file}" "${local_backup_dir}/${log_file_base}_split_${split_number}.failed"
 
           #break
       fi
@@ -152,7 +158,9 @@ function save_to_backup() {
     echo "$(date) ****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"
     echo "$(date) ****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"  >> "${log_file}"
 
-    rclone sync "${temp_dir}" "${rclone_remote}:${rclone_path}" \
+  cp "${log_file}" "${local_backup_dir}/"
+
+    rclone sync "${local_backup_dir}" "${rclone_remote}:${rclone_path}" \
       --config "${restore_rclone_config}" \
       --progress \
       --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
@@ -161,7 +169,7 @@ function save_to_backup() {
   echo "$(date) - completed save_to_backup"
   echo "$(date) - completed save_to_backup" >> "${log_file}"
   
-  mv "${log_file}" "${temp_dir}/"
+  mv "${log_file}" "${local_backup_dir}/"
 }
 
 # # Set the target directory
@@ -183,14 +191,14 @@ rclone_path="$4"
 max_file_size="$5"
 
 # # Optional - Set the temp directory
-# temp_dir="/tmp"
-temp_dir="$6"
+# local_backup_dir="/tmp"
+local_backup_dir="$6"
 
 source_dir="$1"
 config_dir="$2"
 rclone_remote="$3"
 rclone_path="$4"
-temp_dir="$5"
+local_backup_dir="$5"
 max_file_size="$6"
 max_file_type="$7"
 path_filter="$8"
@@ -198,4 +206,4 @@ tar_filename_start="$9"
 log_file="${10}"
 
 # Call the function
-save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${temp_dir}" "${max_file_size}" "${max_file_type}" "${path_filter}" "${tar_filename_start}" "${log_file}"
+save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${local_backup_dir}" "${max_file_size}" "${max_file_type}" "${path_filter}" "${tar_filename_start}" "${log_file}"
