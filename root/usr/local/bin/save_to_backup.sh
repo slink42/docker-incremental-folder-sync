@@ -39,7 +39,7 @@ function save_to_backup() {
   current_date=$(date +"%Y-%m-%d")
   current_time=$(date +"%H%M")
 
-  log_file=${10:-"${config_dir}/save_to_backup_${current_datetime}.log"}
+  log_file=${10:-"${config_dir}/save_to_backup_${tar_filename_start}_${current_datetime}.log"}
   log_file_base=$(basename "${log_file}")
   log_file_base=$(echo "${log_file_base%.*}")
   log_tag="INC_FOLDER_BACKUP"
