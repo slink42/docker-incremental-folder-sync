@@ -89,7 +89,8 @@ function save_to_backup() {
   rm ${config_dir}/${tar_filename_start}*${split_file_suffix}* 2>/dev/null
 
   # Generate file list split into chunks
-  split_files "${path_filter}" "${config_dir}" "${min_file_mod_time}" "${max_file_mod_time}" "${max_file_type}" "${max_size}" "${tar_filename_start}" "${split_file_suffix}"
+  exec s6-setuidgid abc \
+    /usr/local/bin/split_files.sh "${path_filter}" "${config_dir}" "${min_file_mod_time}" "${max_file_mod_time}" "${max_file_type}" "${max_size}" "${tar_filename_start}" "${split_file_suffix}"
 
   for split_list_file in $(ls ${config_dir}/${tar_filename_start}_*${split_file_suffix}*)
   do

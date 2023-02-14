@@ -112,4 +112,4 @@ function split_files() {
 # split_file_suffix=".txt"
 
 # # Call the function
-# split_files "$source_dir" "$config_dir" "$min_file_mod_time" "$max_file_mod_time" "$max_file_type" "$max_size" "$split_file_prefix" "$split_file_suffix"
+split_files $@
