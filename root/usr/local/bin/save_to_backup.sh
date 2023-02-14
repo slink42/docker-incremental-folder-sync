@@ -14,7 +14,7 @@ function save_to_backup() {
   rclone_path=${4:-""}
 
   local_backup_dir=${5:-"$1/backup"}
-  
+
   # max_file_type=count
   # save into another tar if total file ocunt will exceed the threshold of max_file_size files
   # max_file_type=bytes
@@ -73,7 +73,7 @@ function save_to_backup() {
   # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
   last_tar_file=$(echo "$tar_files" | sort | tail -n 1)
   last_tar_date=$(echo $last_tar_file | cut -d "." -f1 | cut -d "_" -f5 | tr -d '\\')
- 
+
   last_tar_date=${last_tar_date:-"1970-01-01 0000"}
   new_tar_date=${current_datetime}
 
@@ -82,7 +82,7 @@ function save_to_backup() {
 
   new_tar_file_no_ext="${tar_filename_start}_${last_tar_date}_to_${new_tar_date}"
   logf "${log_tag}" "New tar files name prefix ${new_tar_file_no_ext}"
-  
+
   cd "${source_dir}"
 
   # Call the function
@@ -94,7 +94,7 @@ function save_to_backup() {
   for split_list_file in $(ls ${config_dir}/${tar_filename_start}_*${split_file_suffix}*)
   do
     split_number="${split_list_file##*_}"
-    
+
     # remove file extension if there is one
     split_number=$(echo "${split_number%.*}")
 
@@ -134,14 +134,20 @@ function save_to_backup() {
 
   cp "${log_file}" "${config_dir}/"
 
+
+# Only tars made in this session
   rclone sync "${local_backup_dir}" "${rclone_remote}:${rclone_path}" \
     --config "${restore_rclone_config}" \
     --progress \
-# Only tars made in this session
     --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
-# All tars with matching prefix 
-#    --filter "+ ${tar_filename_start}_*.tar.gz" \
     --filter "- *"
+
+# # All tars with matching prefix 
+#   rclone sync "${local_backup_dir}" "${rclone_remote}:${rclone_path}" \
+#     --config "${restore_rclone_config}" \
+#     --progress \
+#     --filter "+ ${tar_filename_start}_*.tar.gz" \
+#     --filter "- *"
 
   logf "${log_tag}" "completed save_to_backup"
   logf "${log_tag}" "completed save_to_backup" >> "${log_file}"
@@ -155,7 +161,7 @@ source_dir="$1"
 
 # # Set the config directory
 # config_dir="/path/to/config/directory"
-config_dir"$2"
+config_dir="$2"
 
 # # Set the rclone source
 # rclone_remote="remote_name"
@@ -163,20 +169,15 @@ config_dir"$2"
 rclone_remote="$3"
 rclone_path="$4"
 
-#  # Optional - Set max file size, save into another tar if total size will exceed the thershold kB (5GB)
-#  max_file_size=${5:-"5242880"}
-max_file_size="$5"
 
 # # Optional - Set the temp directory
 # local_backup_dir="/tmp"
-local_backup_dir="$6"
-
-source_dir="$1"
-config_dir="$2"
-rclone_remote="$3"
-rclone_path="$4"
 local_backup_dir="$5"
+
+#  # Optional - Set max file size, save into another tar if total size will exceed the thershold kB (5GB)
+#  max_file_size=${6:-"5242880"}
 max_file_size="$6"
+
 max_file_type="$7"
 path_filter="$8"
 tar_filename_start="$9"
