@@ -5,7 +5,7 @@ split_log_tag="INC_FOLDER_SPLIT"
 
 # Define the function
 function split_files() {
-  
+
   # Set the target directory
   split_source_dir=$1
   config_dir=$2
@@ -36,7 +36,7 @@ function split_files() {
   logf "${split_log_tag}" "Found ${total_files} files in ${split_source_dir} for selected date range. Saved list to: ${file_list_file}"
 
   # Split file list file into smaller batches of file list files
-  if [ "$split_mode" = "bytes"]; then
+  if [ "$split_mode" = "bytes" ]; then
       # Iterate over the files in the target directory
       while read file; do
         # Get the file size
@@ -71,7 +71,7 @@ function split_files() {
       logf "${split_log_tag}" "Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}"
 
     else
-      if [ "$split_mode" = "bytes_avg"]; then
+      if [ "$split_mode" = "bytes_avg" ]; thenS
         #calculate the max count using average file size 
         total_size=$(du -d 0 "${split_source_dir}")
         avg_file_size=$(($total_size / $total_files))
@@ -104,7 +104,7 @@ function split_files() {
 # max_file_mod_time=1640995200  # January 1, 2022 in Unix timestamp format
 
 #  # Optional - Set max file size, save into another tar if total size will exceed the thershold kB (5GB)
-# max_file_type="bytes_avg" 
+# max_file_type="bytes_avg"
 # max_file_size="5242880"
 #
 
