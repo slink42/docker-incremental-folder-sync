@@ -185,4 +185,5 @@ tar_filename_start="$9"
 log_file="${10}"
 
 # Call the function
-save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${local_backup_dir}" "${max_file_size}" "${max_file_type}" "${path_filter}" "${tar_filename_start}" "${log_file}"
+#save_to_backup "${source_dir}" "${config_dir}" "${rclone_remote}" "${rclone_path}" "${local_backup_dir}" "${max_file_size}" "${max_file_type}" "${path_filter}" "${tar_filename_start}" "${log_file}"
+save_to_backup $@
