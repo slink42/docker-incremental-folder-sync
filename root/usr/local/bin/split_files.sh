@@ -71,7 +71,7 @@ function split_files() {
       logf "${split_log_tag}" "Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}"
 
     else
-      if [ "$split_mode" = "bytes_avg" ]; thenS
+      if [ "$split_mode" = "bytes_avg" ]; then
         #calculate the max count using average file size 
         total_size=$(du -d 0 "${split_source_dir}")
         avg_file_size=$(($total_size / $total_files))
