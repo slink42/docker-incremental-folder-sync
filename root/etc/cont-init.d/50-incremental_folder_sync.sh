@@ -13,7 +13,7 @@ target_dir=${EXTRACTED_FILES_PATH:-"$source_dir"}
 config_dir=${CONFIG_PATH:-"/config"}
 temp_dir=${TMP_PATH:-"${target_dir}"}
 mode=${MODE:-"RESTORE"} #BACKUP/RESTORE
-backup_subfolders=${SUBFOLDERS:-"."} # Space separated list of subfolders in source_dir to include in backup
+source_dir_subfolders=${SOURCE_SUBFOLDERS:-"."} # Space separated list of subfolders in source_dir to include in backup
 
 # date and time strings
 current_datetime_format="%Y-%m-%d %H%M"
@@ -91,7 +91,7 @@ if [ "${mode}" = "BACKUP" ]; then
   set -m # Enable Job Control
   set -o xtrace
 
-  for folder in $backup_subfolders; do
+  for folder in $source_dir_subfolders; do
     if ! [ ${folder} = "." ]; then
       tar_filename_start="${tar_filename_start}_${folder,,}"
     fi
