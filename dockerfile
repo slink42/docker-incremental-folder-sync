@@ -58,7 +58,7 @@ RUN \
     apt-get install -yq --no-install-recommends \
         bc \
         ca-certificates \
-        fuse \
+        fuse3 \
         jq \
         lsof \
         openssl \
