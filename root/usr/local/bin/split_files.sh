@@ -112,4 +112,4 @@ function split_files() {
 # split_file_suffix=".txt"
 
 # # Call the function
-split_files $@
+save_to_backup "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${7}" "${8}" "${9}" "${10}"
