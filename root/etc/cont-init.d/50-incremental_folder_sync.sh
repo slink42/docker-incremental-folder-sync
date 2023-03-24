@@ -13,6 +13,7 @@ target_dir=${EXTRACTED_FILES_PATH:-"$source_dir"}
 config_dir=${CONFIG_PATH:-"/config"}
 temp_dir=${TMP_PATH:-"${target_dir}"}
 mode=${MODE:-"RESTORE"} #BACKUP/RESTORE
+backup_subfolders=${SUBFOLDERS:-"."} # Space separated list of subfolders in source_dir to include in backup
 
 # date and time strings
 current_datetime_format="%Y-%m-%d %H%M"
@@ -90,8 +91,11 @@ if [ "${mode}" = "BACKUP" ]; then
   set -m # Enable Job Control
   set -o xtrace
 
-  for folder in Media Metadata; do
-    backup_command="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./${folder}\" \"library_${folder,,}\" \"${log_file}\""
+  for folder in $backup_subfolders; do
+    if ! [ ${folder} = "." ]; then
+      tar_filename_start="${tar_filename_start}_${folder,,}"
+    fi
+    backup_command="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./${folder}\" \"${tar_filename_start}\" \"${log_file}\""
     echo "starting backup command: ${backup_command}"
     /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$temp_dir" "$max_file_size" "$max_file_type" "./${folder}" "library_${folder,,}" "${log_file}" &
   done
