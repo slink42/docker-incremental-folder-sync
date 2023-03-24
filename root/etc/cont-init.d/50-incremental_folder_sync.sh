@@ -78,9 +78,27 @@ if [ "${mode}" = "BACKUP" ]; then
   # exec s6-setuidgid abc \
   #   /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$max_file_size" "$temp_dir"
 
-  echo "backup command:"
-  echo "/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./Media\" \"library_media\" \"${log_file}\""
-  echo "backup command:"
-  echo "/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./Metadata\" \"library_metadata\" \"${log_file}\""
-  
+  # echo "backup command:"
+  # backup_command_media="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./Media\" \"library_media\" \"${log_file}\""
+  # echo "$backup_command_media"
+  # $backup_command_media &
+  # echo "backup command:"
+  # backup_command_metadata="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./Metadata\" \"library_metadata\" \"${log_file}\""
+  # echo "$backup_command_metadata"
+  # $backup_command_media &
+ 
+  set -m # Enable Job Control
+  set -o xtrace
+
+  for folder in Media Metadata; do
+    backup_command="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./${folder}\" \"library_${folder,,}\" \"${log_file}\""
+    echo "starting backup command: ${backup_command}"
+    /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$temp_dir" "$max_file_size" "$max_file_type" "./${folder}" "library_${folder,,}" "${log_file}" &
+  done
+
+  echo "waiting for backup to finish"
+  # Wait for all parallel jobs to finish
+  while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
+  echo "backup done"
+
 fi
