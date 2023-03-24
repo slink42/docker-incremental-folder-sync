@@ -89,15 +89,14 @@ if [ "${mode}" = "BACKUP" ]; then
   # $backup_command_media &
  
   set -m # Enable Job Control
-  set -o xtrace
+  set -o xtrace # Echo commands run
 
   for folder in $source_dir_subfolders; do
     if ! [ ${folder} = "." ]; then
       tar_filename_start="${tar_filename_start}_${folder,,}"
     fi
-    backup_command="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./${folder}\" \"${tar_filename_start}\" \"${log_file}\""
-    echo "starting backup command: ${backup_command}"
-    /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$temp_dir" "$max_file_size" "$max_file_type" "./${folder}" "library_${folder,,}" "${log_file}" &
+    echo "starting folder backup: ${folder}"
+    /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$temp_dir" "$max_file_size" "$max_file_type" "./${folder}" "${tar_filename_start}" "${log_file}" &
   done
 
   echo "waiting for backup to finish"
