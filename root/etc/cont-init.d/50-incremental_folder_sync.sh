@@ -28,8 +28,6 @@ tar_filename_start=${TAR_FILENAME_START:-"library_images"}
 min_disk_space=${MIN_DISK_SPACE:-"52428800"}
 
 
-
-
 # Define the rclone remote and file path within the remote tot he folder containing tar files:
 rclone_remote=${RCLONE_REMOTE:-"SECURE_BACKUP"}
 rclone_path=${RCLONE_PATH:-""}
@@ -75,30 +73,21 @@ fi
 
 
 if [ "${mode}" = "BACKUP" ]; then
-
-  # exec s6-setuidgid abc \
-  #   /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$max_file_size" "$temp_dir"
-
-  # echo "backup command:"
-  # backup_command_media="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./Media\" \"library_media\" \"${log_file}\""
-  # echo "$backup_command_media"
-  # $backup_command_media &
-  # echo "backup command:"
-  # backup_command_metadata="/usr/local/bin/save_to_backup.sh \"$source_dir\" \"$config_dir\" \"$rclone_remote\" \"$rclone_path\" \"$temp_dir\" \"$max_file_size\" \"$max_file_type\" \"./Metadata\" \"library_metadata\" \"${log_file}\""
-  # echo "$backup_command_metadata"
-  # $backup_command_media &
  
   set -m # Enable Job Control
   set -o xtrace # Echo commands run
 
+ # Start a backup thread for each subfolder in source_dir_subfolders
   for folder in $source_dir_subfolders; do
+    folder_tar_filename_start="${tar_filename_start}"
     if ! [ ${folder} = "." ]; then
-      tar_filename_start="${tar_filename_start}_${folder,,}"
+      folder_tar_filename_start="${folder_tar_filename_start}_${folder,,}"
     fi
     echo "starting folder backup: ${folder}"
-    /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$temp_dir" "$max_file_size" "$max_file_type" "./${folder}" "${tar_filename_start}" "${log_file}" &
+    /usr/local/bin/save_to_backup.sh "$source_dir" "$config_dir" "$rclone_remote" "$rclone_path" "$temp_dir" "$max_file_size" "$max_file_type" "./${folder}" "${folder_tar_filename_start}" "${log_file}" &
   done
 
+# Wait for backup threads to complete
   echo "waiting for backup to finish"
   # Wait for all parallel jobs to finish
   while [ 1 ]; do fg 2> /dev/null; [ $? == 1 ] && break; done
