@@ -88,10 +88,15 @@ function save_to_backup() {
   rm ${config_dir}/${tar_filename_start}*${split_file_suffix}* 2>/dev/null
 
   # Generate file list split into chunks
-  exec s6-setuidgid abc \
+  #exec s6-setuidgid abc \
     /usr/local/bin/split_files.sh "${path_filter}" "${config_dir}" "${min_file_mod_time}" "${max_file_mod_time}" "${max_file_type}" "${max_size}" "${tar_filename_start}" "${split_file_suffix}"
 
-  for split_list_file in $(ls ${config_dir}/${tar_filename_start}_*${split_file_suffix}*)
+  split_file_lists=$(ls ${config_dir}/${tar_filename_start}_*${split_file_suffix}*)
+
+  logf "${log_tag}" "starting loading to tar using split_file_lists:"
+  logf "${log_tag}" "${split_file_lists}"
+
+  for split_list_file in ${split_file_lists}
   do
     split_number="${split_list_file##*_}"
 
@@ -99,8 +104,8 @@ function save_to_backup() {
     split_number=$(echo "${split_number%.*}")
 
     split_new_tar_file="${new_tar_file_no_ext}_${split_number}.tar.gz"
+    logf "${log_tag}"  "Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}"
 
-    logf "${log_tag}"  "$Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}"
     logf "${log_tag}"  "Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}" >> "${log_file}"
 
     tar --create -z --file="${split_new_tar_file}" --files-from="${split_list_file}"
