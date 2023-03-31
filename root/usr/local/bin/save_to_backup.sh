@@ -71,8 +71,9 @@ function save_to_backup() {
 
   # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
   last_tar_file=$(echo "$tar_files" | sort | tail -n 1)
-  last_tar_date=$(echo $last_tar_file | cut -d "." -f1 | cut -d "_" -f5 | tr -d '\\')
-
+  last_tar_date=${last_tar_file##*_to_}
+  last_tar_date=$(echo $last_tar_date | cut -d "." -f1 | tr -d '\\')
+ 
   last_tar_date=${last_tar_date:-"1970-01-01 0000"}
   new_tar_date=${current_datetime}
 
@@ -138,6 +139,9 @@ function save_to_backup() {
 # Only tars made in this session
   rclone sync "${local_backup_dir}" "${rclone_remote}:${rclone_path}" \
     --config "${restore_rclone_config}" \
+    --stats 5m \
+    --progress \
+    --log-file "${log_file}" \
     --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
     --filter "- *"
 
