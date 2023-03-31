@@ -2,9 +2,13 @@
 
 logf() {
     if [ -z "$2" ]; then
-        echo "$(date "$(printenv DATE_FORMAT)") INC_FOLDER_SYNC: $1"
+        log_message="$(date "$(printenv DATE_FORMAT)") INC_FOLDER_SYNC: $1"
     else
-        echo "$(date "$(printenv DATE_FORMAT)") $1: $2"
+        log_message="$(date "$(printenv DATE_FORMAT)") $1: $2"
+    fi
+    echo $log_message
+    if [ -z "$3" ]; then
+        echo $log_message >> $3
     fi
 }
 

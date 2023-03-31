@@ -64,10 +64,10 @@ function save_to_backup() {
   # Use the rclone command to list the tar files in the remote. You will need to specify the name of the remote, as well as the path to the directory where the tar files are stored.
   tar_files=$(rclone lsf "${rclone_remote}:${rclone_path}" --config "${restore_rclone_config}"  --filter "+ ${tar_filename_start}_*.tar.gz" --filter "+ ${tar_filename_start}_*.tar" --filter "- *" | while read line; do   echo "${line// /\\ }"; done)
 
-  logf "${log_tag}" "Starting"
-  logf "${log_tag}" "source: ${source_dir}"
-  logf "${log_tag}" "local target: ${local_backup_dir}"
-  logf "${log_tag}" "target: ${rclone_remote}:${rclone_path}"
+  logf "${log_tag}" "Starting" "${log_file}"
+  logf "${log_tag}" "source: ${source_dir}" "${log_file}"
+  logf "${log_tag}" "local target: ${local_backup_dir}" "${log_file}"
+  logf "${log_tag}" "target: ${rclone_remote}:${rclone_path}" "${log_file}"
 
   # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
   last_tar_file=$(echo "$tar_files" | sort | tail -n 1)
@@ -80,7 +80,7 @@ function save_to_backup() {
   min_file_mod_time=$(date --date="${last_tar_date}")
 
   new_tar_file_no_ext="${tar_filename_start}_${last_tar_date}_to_${new_tar_date}"
-  logf "${log_tag}" "New tar files name prefix ${new_tar_file_no_ext}"
+  logf "${log_tag}" "New tar files name prefix ${new_tar_file_no_ext}" "${log_file}"
 
   cd "${source_dir}"
 
@@ -93,8 +93,8 @@ function save_to_backup() {
 
   split_file_lists=$(ls ${config_dir}/${tar_filename_start}_*${split_file_suffix}*)
 
-  logf "${log_tag}" "starting loading to tar using split_file_lists:"
-  logf "${log_tag}" "${split_file_lists}"
+  logf "${log_tag}" "starting loading to tar using split_file_lists:" "${log_file}"
+  logf "${log_tag}" "${split_file_lists}" "${log_file}"
 
   for split_list_file in ${split_file_lists}
   do
@@ -104,46 +104,40 @@ function save_to_backup() {
     split_number=$(echo "${split_number%.*}")
 
     split_new_tar_file="${new_tar_file_no_ext}_${split_number}.tar.gz"
-    logf "${log_tag}"  "Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}"
-
-    logf "${log_tag}"  "Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}" >> "${log_file}"
+    logf "${log_tag}"  "Adding $( cat "${split_list_file}" | wc -l) files to tar ${split_new_tar_file}" "${log_file}"
 
     tar --create -z --file="${split_new_tar_file}" --files-from="${split_list_file}"
 
-    stat "${split_new_tar_file}"
-    stat "${split_new_tar_file}" >> "${log_file}"
+    stat "${split_new_tar_file}" "${log_file}"
 
     if  gzip -v -t "${split_new_tar_file}" 2>  /dev/null; then
-        logf "${log_tag}"  "tar gzip compression tested ok, moving ${split_new_tar_file} to dir ${local_backup_dir}"
+        logf "${log_tag}"  "tar gzip compression tested ok, moving ${split_new_tar_file} to dir ${local_backup_dir}" "${log_file}"
         # Move tar file to tmp dir for syncing to rclone remote
         mv "${split_new_tar_file}" "${local_backup_dir}/"
         # Save file list as log
         mv "${split_list_file}" "${config_dir}/${log_file_base}_split_${split_number}.done"
     else
-        logf "${log_tag}"  "error - tar gzip compression failed when tested: removing ${split_new_tar_file}" >> "${log_file}"
-        logf "${log_tag}"  "error - tar gzip compression failed when tested, removing ${split_new_tar_file}"
+        logf "${log_tag}"  "error - tar gzip compression failed when tested, removing ${split_new_tar_file}" "${log_file}"
 
         # Save file list as log
         mv "${split_list_file}" "${config_dir}/${log_file_base}_split_${split_number}.failed"
 
         #break
     fi
-    logf "${log_tag}"  "$ ****** Finished image Libary tar file rebuild for ${split_new_tar_file} ******"  >> "${log_file}"
+    logf "${log_tag}"  "$ ****** Finished image Libary tar file rebuild for ${split_new_tar_file} ******"  "${log_file}"
     echo "" >> "${log_file}"
     echo "" >> "${log_file}"
   done
 
 
-  logf "${log_tag}" "****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"
-  logf "${log_tag}"  "****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******"  >> "${log_file}"
-
+  logf "${log_tag}" "****** Syncing backup tar files to rclone remote: "${rclone_remote}:${rclone_path}" ******" "${log_file}"
+ 
   cp "${log_file}" "${config_dir}/"
 
 
 # Only tars made in this session
   rclone sync "${local_backup_dir}" "${rclone_remote}:${rclone_path}" \
     --config "${restore_rclone_config}" \
-    --progress \
     --filter "+ ${new_tar_file_no_ext}_*.tar.gz" \
     --filter "- *"
 
@@ -154,8 +148,7 @@ function save_to_backup() {
 #     --filter "+ ${tar_filename_start}_*.tar.gz" \
 #     --filter "- *"
 
-  logf "${log_tag}" "completed save_to_backup"
-  logf "${log_tag}" "completed save_to_backup" >> "${log_file}"
+  logf "${log_tag}" "completed save_to_backup" "${log_file}"
 
   mv "${log_file}" "${config_dir}/"
 }
