@@ -4,11 +4,15 @@ logf() {
     message_or_tag="$1"
     message="$2"
     log_file="$3"
-    if [ -z "$message_tag" ]; then
-        log_message="$(date "$(printenv DATE_FORMAT)") INC_FOLDER_SYNC: $message_or_tag"
+    if [ -z "$message" ]; then
+        message=$message_or_tag
+        tag="INC_FOLDER_SYNC"
     else
-        log_message="$(date "$(printenv DATE_FORMAT)") $message_or_tag: $message"
+        tag=$message_or_tag
     fi
+    
+    log_message="$(date "$(printenv DATE_FORMAT)") $tag: $message"
+    
     echo $log_message
     if ! [ -z "$log_file" ]; then
         echo "$log_message" >> "$log_file"
