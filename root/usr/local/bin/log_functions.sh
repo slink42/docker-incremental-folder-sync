@@ -8,7 +8,7 @@ logf() {
     fi
     echo $log_message
     if ! [ -z "$3" ]; then
-        echo $log_message >> $3
+        echo "$log_message" >> "$3"
     fi
 }
 
