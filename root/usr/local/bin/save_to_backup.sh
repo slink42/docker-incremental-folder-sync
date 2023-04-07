@@ -72,13 +72,14 @@ function save_to_backup() {
   # Iterate through the list of tar files and select the next one that has not yet been processed. You can use a simple text file to keep track of which tar files have already been processed.
   last_tar_file=$(echo "$tar_files" | sort | tail -n 1)
   last_tar_date=${last_tar_file##*_to_}
-  last_tar_date=$(echo $last_tar_date | cut -d "." -f1 | tr -d '\\')
+  last_tar_date=$(echo $last_tar_date | cut -d "." -f1 | cut -d "_" -f1 | tr -d '\\')
  
   last_tar_date=${last_tar_date:-"1970-01-01 0000"}
   new_tar_date=${current_datetime}
 
   max_file_mod_time=$(date --date="${new_tar_date}") 
   min_file_mod_time=$(date --date="${last_tar_date}")
+  logf "${log_tag}" "New tar files will only include files modified between ${min_file_mod_time} and ${max_file_mod_time}"
 
   new_tar_file_no_ext="${tar_filename_start}_${last_tar_date}_to_${new_tar_date}"
   logf "${log_tag}" "New tar files name prefix ${new_tar_file_no_ext}" "${log_file}"
