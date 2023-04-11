@@ -165,7 +165,7 @@ function save_to_backup() {
 
   if [ -f "${log_file}" ]; then
     mv "${log_file}" "${config_dir}/"
-    mv "${log_file}.sync.log"" "${config_dir}/"
+    [ -f "${log_file}.sync.log" ] && mv "${log_file}.sync.log" "${config_dir}/"
   else
     errorf "${log_tag}"  "****** Unable to find log file ${log_file} to move to ${config_dir} ******" 
   fi
