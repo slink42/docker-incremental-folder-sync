@@ -29,11 +29,11 @@ function split_files() {
   group_num=1
 
   # Populate list file with all files meeting criteria
-  logf "${split_log_tag}" "min file timestamp: $min_file_mod_time max file timestamp: $max_file_mod_time"
+  logf "${split_log_tag}" "min file timestamp: $min_file_mod_time max file timestamp: $max_file_mod_time" "${log_file}"
   file_list_file="${config_dir}/${split_file_prefix}.filelist"
   find "${split_source_dir}"  -type f  -newermt "${min_file_mod_time}" ! -newermt "${max_file_mod_time}" > "${file_list_file}"
   total_files=$(cat "${file_list_file}" | wc -l)
-  logf "${split_log_tag}" "Found ${total_files} files in ${split_source_dir} for selected date range. Saved list to: ${file_list_file}"
+  logf "${split_log_tag}" "Found ${total_files} files in ${split_source_dir} for selected date range. Saved list to: ${file_list_file}" "${log_file}"
 
   # Split file list file into smaller batches of file list files
   if [ "$split_mode" = "bytes" ]; then
@@ -48,7 +48,7 @@ function split_files() {
           # Save the current group to a text file
           split_file_name="${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
           printf "%s\n" "${file_list[@]}" > "${split_file_name}"
-          logf "${split_log_tag}" "Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}"
+          logf "${split_log_tag}" "Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}" "${log_file}"
 
           # Reset the file list and group size
           file_list=()
@@ -62,13 +62,13 @@ function split_files() {
         # Add the file to the file list and update the group size
         file_list+=("$file")
         group_size=$(($group_size + $size))
-        # logf "${split_log_tag}" "split group: $group_num - size: $group_size / $max_size - added: $(head -c 100 <<<${file})"
+        # logf "${split_log_tag}" "split group: $group_num - size: $group_size / $max_size - added: $(head -c 100 <<<${file})" "${log_file}"
       done < ${file_list_file}
 
       # Save the final group to a text file
       split_file_name="${config_dir}/${split_file_prefix}_${group_num}${split_file_suffix}"
       printf "%s\n" "${file_list[@]}" > "${split_file_name}"
-      logf "${split_log_tag}" "Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}"
+      logf "${split_log_tag}" "Split $( cat "${split_file_name}" | wc -l) files into file list file: ${split_file_name}" "${log_file}"
 
     else
       if [ "$split_mode" = "bytes_avg" ]; then
@@ -87,10 +87,10 @@ function split_files() {
       #  ${config_dir}/${tar_filename_start}_${split_file_suffix}_${split_suffix}
       # where split_suffix is a 6 character string starting from aaaaaaa
       split_file_name="${config_dir}/${tar_filename_start}_${split_file_suffix}_"
-      logf "${split_log_tag}" "Spliting ${total_files} files into batches of size ${max_count} to split file starting from ${split_file_name}aaaaaaa"
+      logf "${split_log_tag}" "Spliting ${total_files} files into batches of size ${max_count} to split file starting from ${split_file_name}aaaaaaa" "${log_file}"
       split "${file_list_file}" -a 7 -d -l ${max_count} "${split_file_name}"
     fi
- logf "${split_log_tag}" "Split files done"
+ logf "${split_log_tag}" "Split files done" "${log_file}"
 }
 
 # # Set the target directory
